@@ -1,0 +1,1 @@
+"""Versorgungsatlas FastAPI service."""

@@ -1,0 +1,24 @@
+-- Initialize database schemas and extensions for Versorgungsatlas
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+CREATE EXTENSION IF NOT EXISTS "btree_gin";
+
+-- Medallion architecture schemas
+CREATE SCHEMA IF NOT EXISTS raw;   -- Bronze: raw ingested data, append-only
+CREATE SCHEMA IF NOT EXISTS core;  -- Silver: typed, normalized, SCD-2 dimensions
+CREATE SCHEMA IF NOT EXISTS mart;  -- Gold: fused marts and materialized views
+
+-- Grant permissions
+GRANT ALL ON SCHEMA raw  TO atlas;
+GRANT ALL ON SCHEMA core TO atlas;
+GRANT ALL ON SCHEMA mart TO atlas;
+GRANT ALL ON ALL TABLES IN SCHEMA raw  TO atlas;
+GRANT ALL ON ALL TABLES IN SCHEMA core TO atlas;
+GRANT ALL ON ALL TABLES IN SCHEMA mart TO atlas;
+ALTER DEFAULT PRIVILEGES IN SCHEMA raw  GRANT ALL ON TABLES TO atlas;
+ALTER DEFAULT PRIVILEGES IN SCHEMA core GRANT ALL ON TABLES TO atlas;
+ALTER DEFAULT PRIVILEGES IN SCHEMA mart GRANT ALL ON TABLES TO atlas;
+ALTER DEFAULT PRIVILEGES IN SCHEMA raw  GRANT ALL ON SEQUENCES TO atlas;
+ALTER DEFAULT PRIVILEGES IN SCHEMA core GRANT ALL ON SEQUENCES TO atlas;
+ALTER DEFAULT PRIVILEGES IN SCHEMA mart GRANT ALL ON SEQUENCES TO atlas;
