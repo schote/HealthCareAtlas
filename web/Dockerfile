@@ -5,7 +5,7 @@ WORKDIR /app
 # Enable Corepack so the yarn version in package.json is respected
 RUN corepack enable
 
-COPY package.json yarn.lock* ./
+COPY package.json yarn.lock .yarnrc.yml ./
 RUN yarn install --immutable
 
 COPY . .

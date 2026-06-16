@@ -1,0 +1,10 @@
+# Ignore local local dependency files
+node_modules
+.pnp.cjs
+.pnp.loader.mjs
+
+# Ignore local Yarn cache and state
+.yarn/cache
+.yarn/unplugged
+.yarn/install-state.gz
+.yarn/build-state.yml
