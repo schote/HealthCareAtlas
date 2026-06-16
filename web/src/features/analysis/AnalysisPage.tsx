@@ -32,8 +32,8 @@ export function AnalysisPage() {
   const points = (data?.items ?? [])
     .filter((h) => h.kpi != null)
     .map((h) => ({
-      x: (h.kpi as Record<string, number | null>)[xAxis] ?? 0,
-      y: (h.kpi as Record<string, number | null>)[yAxis] ?? 0,
+      x: (h.kpi as unknown as Record<string, number | null>)[xAxis] ?? 0,
+      y: (h.kpi as unknown as Record<string, number | null>)[yAxis] ?? 0,
       def: h.kpi!.def_index,
       name: h.name ?? h.ik_nummer,
       betten: h.kpi!.betten ?? 100,
