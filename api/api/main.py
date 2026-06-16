@@ -7,9 +7,15 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
-from api.routers import deficit_router, hospitals_router, metrics_router, regions_router
+from api.routers import (
+    deficit_router,
+    hospitals_router,
+    hospitals_indicators_router,
+    indicators_router,
+    metrics_router,
+    regions_router,
+)
 
 CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost,http://localhost:80").split(",")
 OPENAPI_OUTPUT = Path("/app/packages/contracts/openapi.json")
@@ -49,9 +55,11 @@ app.add_middleware(
 )
 
 app.include_router(hospitals_router)
+app.include_router(hospitals_indicators_router)
 app.include_router(regions_router)
 app.include_router(metrics_router)
 app.include_router(deficit_router)
+app.include_router(indicators_router)
 
 
 @app.get("/health", tags=["system"])

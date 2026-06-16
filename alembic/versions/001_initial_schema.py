@@ -310,7 +310,9 @@ def upgrade() -> None:
             berichtsjahr    SMALLINT    NOT NULL,
             source_file     TEXT        NOT NULL,
             file_hash       CHAR(64)    NOT NULL,
+            ik_nummer       CHAR(9),
             raw_xml         TEXT        NOT NULL,
+            parsed_json     JSONB,
             ingested_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
     """)
