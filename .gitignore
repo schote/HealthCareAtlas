@@ -30,3 +30,7 @@ dist/
 # Data
 data/
 .claude/
+
+# Raw data files (place these locally, do not commit)
+data/raw/**/*.xml
+data/raw/**/*.csv
