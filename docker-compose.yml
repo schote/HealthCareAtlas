@@ -21,7 +21,6 @@ services:
     build:
       context: ./pipeline
       dockerfile: Dockerfile
-    image: versorgungsatlas-pipeline:latest
     command: dagster-webserver -h 0.0.0.0 -p 3000 -w /opt/dagster/workspace.yaml
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://atlas:atlas_dev_password@postgres:5432/versorgungsatlas}
@@ -38,7 +37,9 @@ services:
     restart: unless-stopped
 
   dagster-daemon:
-    image: versorgungsatlas-pipeline:latest
+    build:
+      context: ./pipeline
+      dockerfile: Dockerfile
     command: dagster-daemon run -w /opt/dagster/workspace.yaml
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://atlas:atlas_dev_password@postgres:5432/versorgungsatlas}

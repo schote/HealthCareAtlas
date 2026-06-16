@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /opt/dagster/app
 
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
 COPY pyproject.toml .
 RUN pip install --no-cache-dir -e ".[dev]"
 
