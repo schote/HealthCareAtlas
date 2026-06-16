@@ -30,3 +30,4 @@ dist/
 # Data
 data/
 .claude/
+web/.yarnrc.yml
