@@ -1,6 +1,6 @@
 load_from:
   - python_file:
-      relative_path: pipeline/definitions.py
+      relative_path: app/pipeline/definitions.py
       working_directory: /opt/dagster/app
       attribute: defs
       location_name: versorgungsatlas_pipeline
