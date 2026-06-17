@@ -1,7 +1,10 @@
 """Silver layer: build SCD-2 dim_einrichtung from Bronze Qualitätsberichte."""
 
+import json
+
 import pandas as pd
 from dagster import AssetExecutionContext, Output, StaticPartitionsDefinition, asset
+from sqlalchemy import text
 
 from pipeline.resources import DatabaseResource
 
@@ -21,11 +24,11 @@ SELECT
     r.plz,
     r.ort,
     r.strasse,
-    r.betten,
+    r.betten::integer,
     make_date(:berichtsjahr, 1, 1) AS valid_from,
     '9999-12-31'::date             AS valid_to,
     true                           AS is_current
-FROM staging_einrichtung r
+FROM core.staging_einrichtung r
 ON CONFLICT (ik_nummer, standort_id) WHERE is_current
 DO UPDATE SET
     name             = EXCLUDED.name,
@@ -50,27 +53,23 @@ def dim_einrichtung(context: AssetExecutionContext, database: DatabaseResource) 
     Extract hospital master data from Bronze and load into core.dim_einrichtung
     using Slowly Changing Dimension Type 2 (SCD-2) semantics.
 
-    When attributes change between years the old row gets valid_to set and
-    is_current=false; a new row is inserted with the new values.
+    Reads the pre-parsed JSON stored by the Bronze asset to avoid re-parsing XML.
     """
     berichtsjahr = int(context.partition_key)
 
-    # Read parsed fields from raw layer
     query = """
-        SELECT DISTINCT ON (source_file)
-            raw_xml AS xml_doc,
-            source_file,
-            berichtsjahr
+        SELECT DISTINCT ON (ik_nummer)
+            parsed_json,
+            ik_nummer
         FROM raw.qualitaetsbericht
-        WHERE berichtsjahr = %(berichtsjahr)s
+        WHERE berichtsjahr = %(berichtsjahr)s AND ik_nummer IS NOT NULL
+        ORDER BY ik_nummer, ingested_at DESC
     """
 
     with database.get_sync_session() as session:
         df = pd.read_sql(query, con=session.connection(), params={"berichtsjahr": berichtsjahr})
 
-    # TODO: parse XML with lxml to extract structured fields from each Qualitätsbericht.
-    # For now produce an empty DataFrame so the asset graph can be validated end-to-end.
-    records = _parse_qb_xml(df, berichtsjahr)
+    records = _extract_einrichtungen(df)
     context.log.info(f"Parsed {len(records)} Einrichtung records from Bronze for {berichtsjahr}")
 
     upserted = 0
@@ -84,10 +83,7 @@ def dim_einrichtung(context: AssetExecutionContext, database: DatabaseResource) 
                 if_exists="replace",
                 index=False,
             )
-            session.execute(
-                __import__("sqlalchemy").text(_UPSERT_SQL),
-                {"berichtsjahr": berichtsjahr},
-            )
+            session.execute(text(_UPSERT_SQL), {"berichtsjahr": berichtsjahr})
             upserted = len(records)
 
     return Output(
@@ -96,11 +92,27 @@ def dim_einrichtung(context: AssetExecutionContext, database: DatabaseResource) 
     )
 
 
-def _parse_qb_xml(df: pd.DataFrame, berichtsjahr: int) -> list[dict]:
-    """
-    Parse raw XML rows into structured hospital records.
-
-    TODO: implement full lxml XPath extraction against the DeQS QB schema.
-    The QB XML schema is documented in the G-BA specification (Anlage 1 QBR).
-    """
-    return []
+def _extract_einrichtungen(df: pd.DataFrame) -> list[dict]:
+    """Extract einrichtung fields from the parsed_json column stored by the Bronze asset."""
+    records = []
+    for _, row in df.iterrows():
+        try:
+            parsed = json.loads(row["parsed_json"]) if isinstance(row["parsed_json"], str) else row["parsed_json"]
+        except Exception:
+            continue
+        ein = parsed.get("einrichtung") or {}
+        ik_nummer = ein.get("ik_nummer")
+        if not ik_nummer:
+            continue
+        records.append({
+            "ik_nummer": ik_nummer,
+            "standort_id": ein.get("standort_id") or "00",
+            "name": ein.get("name"),
+            "ags": None,  # Not in QB XML; enriched separately via BKG geodata
+            "versorgungsstufe": ein.get("versorgungsstufe"),
+            "plz": ein.get("plz"),
+            "ort": ein.get("ort"),
+            "strasse": ein.get("strasse"),
+            "betten": ein.get("betten"),
+        })
+    return records

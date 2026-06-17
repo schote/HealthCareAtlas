@@ -159,7 +159,15 @@ def einrichtung_kpi(context: AssetExecutionContext, database: DatabaseResource) 
 def deficit_rank(context: AssetExecutionContext, database: DatabaseResource) -> Output:
     """Refresh the pre-aggregated ranking view used by the /deficit/ranking API endpoint."""
     with database.get_sync_session() as session:
-        session.execute(text("REFRESH MATERIALIZED VIEW CONCURRENTLY mart.v_deficit_rank"))
+        row = session.execute(
+            text("SELECT relispopulated FROM pg_class WHERE relname = 'v_deficit_rank' AND relkind = 'm'")
+        ).fetchone()
+        is_populated = row and row[0]
+
+        if is_populated:
+            session.execute(text("REFRESH MATERIALIZED VIEW CONCURRENTLY mart.v_deficit_rank"))
+        else:
+            session.execute(text("REFRESH MATERIALIZED VIEW mart.v_deficit_rank"))
 
     context.log.info("Refreshed mart.v_deficit_rank")
     return Output(value=None, metadata={"refreshed": True})
