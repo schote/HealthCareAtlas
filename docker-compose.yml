@@ -8,8 +8,8 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./infra/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
-    ports:
-      - "5432:5432"
+    ports: # Port logic external:internal, change external ports to prevent collusion with other application
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-atlas} -d ${POSTGRES_DB:-versorgungsatlas}"]
       interval: 10s
@@ -31,7 +31,7 @@ services:
       - ./pipeline:/opt/dagster/app/pipeline:ro
       - ./data:/data:ro
     ports:
-      - "3000:3000"
+      - "3001:3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,7 +64,7 @@ services:
       DATABASE_URL_SYNC: ${DATABASE_URL_SYNC:-postgresql://atlas:atlas_dev_password@postgres:5432/versorgungsatlas}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,http://localhost:80}
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,9 +75,9 @@ services:
       context: ./web
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8001}
     ports:
-      - "80:80"
+      - "8081:80"
     depends_on:
       - api
     restart: unless-stopped
