@@ -22,7 +22,7 @@ async def list_hospitals(
     versorgungsstufe: str | None = Query(default=None),
 ) -> HospitalList:
     """List hospitals with their KPIs. Reads exclusively from mart schema."""
-    where_clauses = ["e.is_current = TRUE", "k.berichtsjahr = :berichtsjahr"]
+    where_clauses = ["e.is_current = TRUE"]
     params: dict = {"berichtsjahr": berichtsjahr, "offset": (page - 1) * page_size, "limit": page_size}
 
     if search:
@@ -43,7 +43,8 @@ async def list_hospitals(
     count_result = await session.execute(
         text(f"""
             SELECT COUNT(*) FROM core.dim_einrichtung e
-            LEFT JOIN mart.einrichtung_kpi k ON k.ik_nummer = e.ik_nummer
+            LEFT JOIN mart.einrichtung_kpi k
+                ON k.ik_nummer = e.ik_nummer AND k.berichtsjahr = :berichtsjahr
             WHERE {where_sql}
         """),
         params,
@@ -59,7 +60,8 @@ async def list_hospitals(
                 k.access_min, k.minq_quote, k.casemix_index, k.betten,
                 k.konfidenz, k.datenstand
             FROM core.dim_einrichtung e
-            LEFT JOIN mart.einrichtung_kpi k ON k.ik_nummer = e.ik_nummer
+            LEFT JOIN mart.einrichtung_kpi k
+                ON k.ik_nummer = e.ik_nummer AND k.berichtsjahr = :berichtsjahr
             WHERE {where_sql}
             ORDER BY k.def_index DESC NULLS LAST
             LIMIT :limit OFFSET :offset
