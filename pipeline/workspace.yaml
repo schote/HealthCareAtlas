@@ -1,4 +1,5 @@
 load_from:
-  - python_package:
-      package_name: pipeline
+  - python_module:
+      module_name: pipeline.definitions
       location_name: versorgungsatlas_pipeline
+      attribute: defs
