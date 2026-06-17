@@ -17,7 +17,6 @@ QUARTALE = StaticPartitionsDefinition([
     group_name="bronze",
     partitions_def=QUARTALE,
     description="Raw PpUGV nursing staff data CSV → raw.ppugv rows (append-only).",
-    required_resource_keys={"database"},
 )
 def ppugv_raw(context: AssetExecutionContext, database: DatabaseResource) -> Output:
     """

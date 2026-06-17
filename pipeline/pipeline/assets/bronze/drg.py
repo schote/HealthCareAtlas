@@ -23,7 +23,6 @@ DRG_COLUMNS = {
     group_name="bronze",
     partitions_def=BERICHTSJAHRE,
     description="Raw §21 DRG case data CSV → raw.drg_fallzahlen rows (append-only).",
-    required_resource_keys={"database"},
 )
 def drg_raw(context: AssetExecutionContext, database: DatabaseResource) -> Output:
     """
@@ -42,6 +41,8 @@ def drg_raw(context: AssetExecutionContext, database: DatabaseResource) -> Outpu
     for csv_file in csv_files:
         df = pd.read_csv(csv_file, sep=";", dtype=str, encoding="utf-8")
         df = df.rename(columns={k: v for k, v in DRG_COLUMNS.items() if k in df.columns})
+        keep = [v for v in DRG_COLUMNS.values() if v in df.columns]
+        df = df[keep]
         df["berichtsjahr"] = berichtsjahr
         df["source_file"] = csv_file.name
         df["ingested_at"] = pd.Timestamp.utcnow()

@@ -1,7 +1,5 @@
 """Bronze layer: ingest and parse Strukturierte Qualitätsberichte (QB) XML from G-BA/DeQS."""
 
-from __future__ import annotations
-
 import hashlib
 import json
 import re
@@ -50,12 +48,8 @@ def _text(el: etree._Element | None, *path: str) -> str | None:
     for step in path:
         if node is None:
             return None
-        found = node.find(f".//{_local(step)}")
-        if found is None:
-            # Also try direct child
-            found = next(
-                (c for c in node if etree.QName(c.tag).localname == step), None
-            )
+        results = node.xpath(f".//{_local(step)}")
+        found = results[0] if results else None
         node = found
     if node is None or node.text is None:
         return None
@@ -91,7 +85,7 @@ def _bool(el: etree._Element | None, *path: str) -> bool | None:
 
 def _find_all(root: etree._Element, local_name: str) -> list[etree._Element]:
     """Find all descendant elements with a given local name (namespace-agnostic)."""
-    return root.findall(f".//*[local-name()='{local_name}']")
+    return root.xpath(f".//*[local-name()='{local_name}']")
 
 
 def parse_qb_xml(xml_content: bytes, berichtsjahr: int) -> dict[str, Any]:
@@ -276,7 +270,6 @@ def _parse_fachabteilungen(root: etree._Element) -> list[dict[str, Any]]:
     group_name="bronze",
     partitions_def=BERICHTSJAHRE,
     description="Parse Qualitätsbericht XML → structured rows in raw.qualitaetsbericht.",
-    required_resource_keys={"database"},
 )
 def qualitaetsberichte_raw(context: AssetExecutionContext, database: DatabaseResource) -> Output:
     """

@@ -5,7 +5,7 @@ from dagster import AssetExecutionContext, Output, StaticPartitionsDefinition, a
 from sqlalchemy import text
 
 from pipeline.resources import DatabaseResource
-from pipeline.pipeline.assets.bronze.qualitaetsberichte import parse_qb_xml
+from pipeline.assets.bronze.qualitaetsberichte import parse_qb_xml
 
 BERICHTSJAHRE = StaticPartitionsDefinition(["2020", "2021", "2022", "2023"])
 
@@ -46,7 +46,6 @@ DO UPDATE SET
     partitions_def=BERICHTSJAHRE,
     deps=["qualitaetsberichte_raw"],
     description="Extract QB quality indicators from Bronze into core.fact_qualitaetsindikator and core.dim_qualitaetsindikator.",
-    required_resource_keys={"database"},
 )
 def qualitaetsindikatoren(context: AssetExecutionContext, database: DatabaseResource) -> Output:
     """

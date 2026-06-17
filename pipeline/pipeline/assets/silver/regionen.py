@@ -20,7 +20,6 @@ ON CONFLICT (ags) DO UPDATE SET
 @asset(
     group_name="silver",
     description="Load BKG municipality boundaries + Destatis demographics into core.dim_region.",
-    required_resource_keys={"database"},
 )
 def dim_region(context: AssetExecutionContext, database: DatabaseResource) -> Output:
     """

@@ -44,7 +44,6 @@ DO UPDATE SET
     partitions_def=BERICHTSJAHRE,
     deps=["qualitaetsberichte_raw"],
     description="Normalize raw Qualitätsbericht XML into SCD-2 core.dim_einrichtung.",
-    required_resource_keys={"database"},
 )
 def dim_einrichtung(context: AssetExecutionContext, database: DatabaseResource) -> Output:
     """
@@ -58,8 +57,8 @@ def dim_einrichtung(context: AssetExecutionContext, database: DatabaseResource) 
 
     # Read parsed fields from raw layer
     query = """
-        SELECT DISTINCT
-            raw_xml::xml AS xml_doc,
+        SELECT DISTINCT ON (source_file)
+            raw_xml AS xml_doc,
             source_file,
             berichtsjahr
         FROM raw.qualitaetsbericht

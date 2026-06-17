@@ -1,6 +1,5 @@
 """Gold layer: compute Deficit Index and populate mart.einrichtung_kpi."""
 
-import pandas as pd
 from dagster import AssetExecutionContext, Output, StaticPartitionsDefinition, asset
 from sqlalchemy import text
 
@@ -59,11 +58,11 @@ FROM core.dim_einrichtung e
 -- Weights from versioned config
 CROSS JOIN (
     SELECT
-        weight FILTER (WHERE metric_key = 'mort_adj')   AS w_mort,
-        weight FILTER (WHERE metric_key = 'ppugv_quote') AS w_ppugv,
-        weight FILTER (WHERE metric_key = 'access_min')  AS w_access,
-        weight FILTER (WHERE metric_key = 'minq_quote')  AS w_minq,
-        weight FILTER (WHERE metric_key = 'kap_auslast') AS w_kap
+        MAX(weight) FILTER (WHERE metric_key = 'mort_adj')    AS w_mort,
+        MAX(weight) FILTER (WHERE metric_key = 'ppugv_quote') AS w_ppugv,
+        MAX(weight) FILTER (WHERE metric_key = 'access_min')  AS w_access,
+        MAX(weight) FILTER (WHERE metric_key = 'minq_quote')  AS w_minq,
+        MAX(weight) FILTER (WHERE metric_key = 'kap_auslast') AS w_kap
     FROM core.config_weights
     WHERE valid_from = (SELECT MAX(valid_from) FROM core.config_weights)
 ) w
@@ -86,7 +85,6 @@ LEFT JOIN (
     SELECT fe.ik_nummer, AVG(er.fahrzeit_maxvers) AS fahrzeit_maxvers
     FROM core.fact_erreichbarkeit er
     JOIN core.dim_einrichtung fe ON fe.standort_id = er.standort_id AND fe.is_current
-    WHERE fe.ik_nummer = e.ik_nummer
     GROUP BY fe.ik_nummer
 ) er ON er.ik_nummer = e.ik_nummer
 -- Minimum volume compliance
@@ -101,6 +99,13 @@ LEFT JOIN (
     WHERE berichtsjahr = :berichtsjahr
     GROUP BY ik_nummer
 ) mq ON mq.ik_nummer = e.ik_nummer
+-- DRG casemix index (avg over DRG codes per hospital)
+LEFT JOIN (
+    SELECT ik_nummer, AVG(casemix_index) AS casemix_index
+    FROM core.fact_drg
+    WHERE berichtsjahr = :berichtsjahr
+    GROUP BY ik_nummer
+) d ON d.ik_nummer = e.ik_nummer
 -- Capacity facts
 LEFT JOIN (
     SELECT ik_nummer, betten, bettenauslastung
@@ -126,7 +131,6 @@ ON CONFLICT (ik_nummer, berichtsjahr) DO UPDATE SET
     partitions_def=BERICHTSJAHRE,
     deps=["dim_einrichtung", "dim_region"],
     description="Fuse all KPI fact tables into mart.einrichtung_kpi and compute Deficit Index.",
-    required_resource_keys={"database"},
 )
 def einrichtung_kpi(context: AssetExecutionContext, database: DatabaseResource) -> Output:
     """
@@ -151,7 +155,6 @@ def einrichtung_kpi(context: AssetExecutionContext, database: DatabaseResource) 
     group_name="gold",
     deps=["einrichtung_kpi"],
     description="Refresh mart.v_deficit_rank materialized view CONCURRENTLY.",
-    required_resource_keys={"database"},
 )
 def deficit_rank(context: AssetExecutionContext, database: DatabaseResource) -> Output:
     """Refresh the pre-aggregated ranking view used by the /deficit/ranking API endpoint."""
