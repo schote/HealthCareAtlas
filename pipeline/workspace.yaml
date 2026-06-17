@@ -1,5 +1,6 @@
 load_from:
-  - python_module:
-      module_name: pipeline.definitions
-      location_name: versorgungsatlas_pipeline
+  - python_file:
+      relative_path: pipeline/definitions.py
+      working_directory: /opt/dagster/app
       attribute: defs
+      location_name: versorgungsatlas_pipeline
