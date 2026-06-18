@@ -150,8 +150,7 @@ def upgrade() -> None:
     """)
     op.execute("""
         INSERT INTO core.config_weights (version, metric_key, weight, valid_from) VALUES
-        ('v2.0', 'quality',  0.70, '2026-06-18'),
-        ('v2.0', 'casemix',  0.30, '2026-06-18')
+        ('v3.0', 'quality', 1.00, '2026-06-18')
     """)
 
     # ── core.fact_qualitaet (partitioned) ─────────────────────────────────────

@@ -221,26 +221,68 @@ def _parse_qualitaetsindikatoren(root: etree._Element) -> list[dict[str, Any]]:
 
 
 def _parse_mindestmengen(root: etree._Element) -> list[dict[str, Any]]:
-    """Extract minimum volume (Mindestmenge) requirements."""
+    """
+    Extract Mindestmenge (minimum volume) compliance from QB XML.
+
+    Real QB 2022 structure:
+      <Mindestmengen>
+        <Leistungsbereich>           ← one per procedure (current year)
+          <Bezeichnung>…</Bezeichnung>
+          <Erbrachte_Menge>135</Erbrachte_Menge>
+          <Begruendung><MM_Schluessel>MM08</MM_Schluessel></Begruendung>
+        </Leistungsbereich>
+        <Mindestmengen_Angabe_Prognosejahr>
+          <Leistungsbereich>         ← one per procedure (prognosis + authorization)
+            <Bezeichnung>…</Bezeichnung>
+            <Leistungsberechtigung_Prognosejahr>ja</Leistungsberechtigung_Prognosejahr>
+            <Ergebnis_Prognosepruefung_Landesverbaende>
+              <Leistungsmenge_Berichtsjahr>135</Leistungsmenge_Berichtsjahr>
+            </Ergebnis_Prognosepruefung_Landesverbaende>
+          </Leistungsbereich>
+        </Mindestmengen_Angabe_Prognosejahr>
+      </Mindestmengen>
+    """
     result = []
-    for el in _find_all(root, "Mindestmenge"):
-        ops_code = _text(el, "OPSCode") or _text(el, "OPS") or _text(el, "Leistung")
-        if not ops_code:
-            continue
 
-        raw_status = _text(el, "Status") or ""
-        ausnahme = _text(el, "Ausnahmetatbestand") or _text(el, "Ausnahme")
+    for mm in _find_all(root, "Mindestmengen"):
+        prognose_els = mm.xpath("*[local-name()='Mindestmengen_Angabe_Prognosejahr']")
 
-        result.append({
-            "ops_code": ops_code,
-            "soll": _int(el, "Soll") or _int(el, "Mindestzahl"),
-            "ist": _int(el, "Ist") or _int(el, "Fallzahl"),
-            "status": {
-                "konform": raw_status.lower() in ("erfuellt", "erfüllt", "ja", "true"),
-                "status_text": raw_status,
-                "ausnahme": ausnahme,
-            },
-        })
+        if prognose_els:
+            # Preferred: prognosis section has both case count and authorization status
+            for lb in prognose_els[0].xpath("*[local-name()='Leistungsbereich']"):
+                bezeichnung = _text(lb, "Bezeichnung")
+                if not bezeichnung:
+                    continue
+                berechtigung = (_text(lb, "Leistungsberechtigung_Prognosejahr") or "").lower()
+                authorized = berechtigung in ("ja", "yes", "true", "1")
+
+                menge = None
+                for ep in lb.xpath("*[local-name()='Ergebnis_Prognosepruefung_Landesverbaende']"):
+                    menge = _int(ep, "Leistungsmenge_Berichtsjahr")
+                    break
+
+                result.append({
+                    "ops_code": bezeichnung,
+                    "soll": None,
+                    "ist": menge,
+                    "status": {"authorized": authorized, "berechtigung": berechtigung},
+                })
+        else:
+            # Fallback: direct Leistungsbereich children (no authorization data)
+            for lb in mm.xpath("*[local-name()='Leistungsbereich']"):
+                bezeichnung = _text(lb, "Bezeichnung")
+                if not bezeichnung:
+                    continue
+                mm_key = None
+                for beg in lb.xpath("*[local-name()='Begruendung']"):
+                    mm_key = _text(beg, "MM_Schluessel")
+                    break
+                result.append({
+                    "ops_code": mm_key or bezeichnung,
+                    "soll": None,
+                    "ist": _int(lb, "Erbrachte_Menge"),
+                    "status": {"authorized": None, "berechtigung": None},
+                })
 
     return result
 

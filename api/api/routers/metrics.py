@@ -8,26 +8,18 @@ METRICS: list[MetricDefinition] = [
     MetricDefinition(
         key="def_index",
         label="Deficit Index",
-        description="Composite deficit index (0-100, higher = more deficit).",
+        description="Supply deficit index (0-100, higher = more deficit). Based on Mindestmenge compliance.",
         unit="score",
         weight=1.0,
         source="Versorgungsatlas fusion pipeline",
     ),
     MetricDefinition(
         key="quality",
-        label="Qualitaetsdefizit (QB)",
-        description="Fraction of quality indicators flagged as auffaellig in Strukturierte Qualitaetsberichte (0-1, higher = worse).",
+        label="Mindestmenge-Defizit",
+        description="Fraction of mandatory minimum-volume procedures for which the hospital is NOT authorized (0=fully compliant, 1=none met).",
         unit="ratio",
-        weight=0.70,
-        source="Strukturierte Qualitaetsberichte (G-BA/DeQS)",
-    ),
-    MetricDefinition(
-        key="casemix",
-        label="Casemix-Index (DRG)",
-        description="Average DRG casemix index. Lower values indicate less specialisation and higher supply deficit.",
-        unit="index",
-        weight=0.30,
-        source="Paragraph 21-Daten (InEK / FDZ)",
+        weight=1.0,
+        source="Strukturierte Qualitaetsberichte (G-BA) — Mindestmengen",
     ),
 ]
 
