@@ -17,6 +17,25 @@ services:
       retries: 5
     restart: unless-stopped
 
+  migrate:
+    build:
+      context: ./pipeline
+      dockerfile: Dockerfile
+    command: >
+      sh -c "cd /opt/dagster/alembic && alembic upgrade head"
+    environment:
+      DATABASE_URL_SYNC: ${DATABASE_URL_SYNC:-postgresql://atlas:atlas_dev_password@postgres:5432/versorgungsatlas}
+      PYTHONPATH: /opt/dagster/app
+    volumes:
+      - ./alembic:/opt/dagster/alembic:ro
+      - ./api:/opt/dagster/api:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    profiles:
+      - tools
+
   dagster-webserver:
     build:
       context: ./pipeline
