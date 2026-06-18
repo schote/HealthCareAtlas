@@ -16,12 +16,8 @@ class KPI(BaseModel):
     ik_nummer: str
     berichtsjahr: int
     def_index: float = Field(ge=0, le=100)
-    mort_adj: float | None = None
-    ppugv_quote: float | None = None
-    access_min: float | None = None
-    minq_quote: float | None = None
+    quality_score: float | None = None
     casemix_index: float | None = None
-    betten: int | None = None
     konfidenz: float = Field(ge=0, le=1)
     datenstand: date
 

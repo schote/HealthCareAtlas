@@ -56,8 +56,7 @@ async def list_hospitals(
             SELECT
                 e.ik_nummer, e.name, e.ort, e.plz, e.ags,
                 e.versorgungsstufe::text,
-                k.berichtsjahr, k.def_index, k.mort_adj, k.ppugv_quote,
-                k.access_min, k.minq_quote, k.casemix_index, k.betten,
+                k.berichtsjahr, k.def_index, k.quality_score, k.casemix_index,
                 k.konfidenz, k.datenstand
             FROM core.dim_einrichtung e
             LEFT JOIN mart.einrichtung_kpi k
@@ -76,12 +75,8 @@ async def list_hospitals(
             kpi = {
                 "berichtsjahr": row["berichtsjahr"],
                 "def_index": row["def_index"],
-                "mort_adj": row["mort_adj"],
-                "ppugv_quote": row["ppugv_quote"],
-                "access_min": row["access_min"],
-                "minq_quote": row["minq_quote"],
+                "quality_score": row["quality_score"],
                 "casemix_index": row["casemix_index"],
-                "betten": row["betten"],
                 "konfidenz": row["konfidenz"],
                 "datenstand": row["datenstand"],
             }
@@ -110,8 +105,7 @@ async def get_hospital(
             SELECT
                 e.ik_nummer, e.standort_id, e.name, e.ort, e.plz, e.ags,
                 e.strasse, e.versorgungsstufe::text,
-                k.berichtsjahr, k.def_index, k.mort_adj, k.ppugv_quote,
-                k.access_min, k.minq_quote, k.casemix_index, k.betten,
+                k.berichtsjahr, k.def_index, k.quality_score, k.casemix_index,
                 k.konfidenz, k.datenstand
             FROM core.dim_einrichtung e
             LEFT JOIN mart.einrichtung_kpi k
@@ -130,12 +124,8 @@ async def get_hospital(
         kpi = {
             "berichtsjahr": data["berichtsjahr"],
             "def_index": data["def_index"],
-            "mort_adj": data["mort_adj"],
-            "ppugv_quote": data["ppugv_quote"],
-            "access_min": data["access_min"],
-            "minq_quote": data["minq_quote"],
+            "quality_score": data["quality_score"],
             "casemix_index": data["casemix_index"],
-            "betten": data["betten"],
             "konfidenz": data["konfidenz"],
             "datenstand": data["datenstand"],
         }

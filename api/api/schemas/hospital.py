@@ -6,13 +6,9 @@ from pydantic import BaseModel, Field
 
 class HospitalKPI(BaseModel):
     berichtsjahr: int
-    def_index: float = Field(ge=0, le=100, description="Deficit Index 0–100")
-    mort_adj: float | None = Field(None, description="Risk-adjusted SMR")
-    ppugv_quote: float | None = Field(None, description="Nursing staff compliance %")
-    access_min: float | None = Field(None, description="Travel time to nearest Maximalversorger (min)")
-    minq_quote: float | None = Field(None, description="Minimum volume compliance %")
-    casemix_index: float | None = None
-    betten: int | None = None
+    def_index: float = Field(ge=0, le=100, description="Deficit Index 0-100")
+    quality_score: float | None = Field(None, description="Fraction of QB indicators flagged auffaellig (0-1)")
+    casemix_index: float | None = Field(None, description="Average DRG casemix index")
     konfidenz: float = Field(ge=0, le=1, description="Data quality confidence score")
     datenstand: date
 

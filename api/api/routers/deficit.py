@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import get_session
@@ -25,26 +26,31 @@ async def get_deficit_ranking(
     The materialized view is refreshed by the Dagster gold_fusion job at the
     end of each pipeline run via REFRESH MATERIALIZED VIEW CONCURRENTLY.
     """
-    count_result = await session.execute(
-        text("""
-            SELECT COUNT(*) FROM mart.v_deficit_rank
-            WHERE berichtsjahr = :year AND ebene = :ebene AND metric_key = :metric_key
-        """),
-        {"year": berichtsjahr, "ebene": ebene, "metric_key": metric_key},
-    )
-    total = count_result.scalar() or 0
+    try:
+        count_result = await session.execute(
+            text("""
+                SELECT COUNT(*) FROM mart.v_deficit_rank
+                WHERE berichtsjahr = :year AND ebene = :ebene AND metric_key = :metric_key
+            """),
+            {"year": berichtsjahr, "ebene": ebene, "metric_key": metric_key},
+        )
+        total = count_result.scalar() or 0
 
-    rows = await session.execute(
-        text("""
-            SELECT rang, entity_id, name, ebene, metric_key, score, berichtsjahr
-            FROM mart.v_deficit_rank
-            WHERE berichtsjahr = :year AND ebene = :ebene AND metric_key = :metric_key
-            ORDER BY rang ASC
-            LIMIT :limit OFFSET :offset
-        """),
-        {"year": berichtsjahr, "ebene": ebene, "metric_key": metric_key,
-         "limit": limit, "offset": offset},
-    )
+        rows = await session.execute(
+            text("""
+                SELECT rang, entity_id, name, ebene, metric_key, score, berichtsjahr
+                FROM mart.v_deficit_rank
+                WHERE berichtsjahr = :year AND ebene = :ebene AND metric_key = :metric_key
+                ORDER BY rang ASC
+                LIMIT :limit OFFSET :offset
+            """),
+            {"year": berichtsjahr, "ebene": ebene, "metric_key": metric_key,
+             "limit": limit, "offset": offset},
+        )
+        items = [DeficitRankingItem(**dict(r)) for r in rows.mappings()]
+    except DBAPIError:
+        # View exists but has not been populated yet (no pipeline run)
+        total = 0
+        items = []
 
-    items = [DeficitRankingItem(**dict(r)) for r in rows.mappings()]
     return DeficitRanking(total=total, berichtsjahr=berichtsjahr, items=items)

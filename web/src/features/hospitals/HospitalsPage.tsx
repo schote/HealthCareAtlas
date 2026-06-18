@@ -100,7 +100,7 @@ export function HospitalsPage() {
                 <td className="px-4 py-2 text-right text-gray-600">
                   {h.kpi?.quality_score != null ? `${(h.kpi.quality_score * 100).toFixed(1)}%` : "–"}
                 </td>
-                <td className="px-4 py-2 text-right text-gray-600">{h.kpi?.casemix_index?.toFixed(3) ?? "–"}</td>
+                <td className="px-4 py-2 text-right text-gray-600">{h.kpi?.casemix_index?.toFixed(2) ?? "–"}</td>
                 <td className="px-4 py-2 text-right">
                   {h.kpi ? (
                     <span className={`text-xs ${h.kpi.konfidenz >= 0.8 ? "text-green-600" : h.kpi.konfidenz >= 0.5 ? "text-yellow-600" : "text-red-500"}`}>
