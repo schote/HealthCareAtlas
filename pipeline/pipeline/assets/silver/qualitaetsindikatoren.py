@@ -25,8 +25,8 @@ INSERT INTO core.dim_einrichtung (
 )
 VALUES (
     :ik_nummer, :standort_id, :name, :plz, :ort, :strasse, :betten,
-    :versorgungsstufe::core.versorgungsstufe_enum,
-    :traegerschaft::core.traegerschaft_enum,
+    CAST(:versorgungsstufe AS core.versorgungsstufe_enum),
+    CAST(:traegerschaft AS core.traegerschaft_enum),
     :lat, :lon,
     make_date(:berichtsjahr, 1, 1), '9999-12-31'::date, true
 )
