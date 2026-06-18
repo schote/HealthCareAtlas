@@ -32,6 +32,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         include_schemas=True,
+        version_table="atlas_alembic_version",
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -48,6 +49,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             include_schemas=True,
+            version_table="atlas_alembic_version",
             # Exclude PostgreSQL system schemas from autogenerate
             include_object=lambda obj, name, type_, reflected, compare_to: (
                 name not in ("public", "pg_catalog", "information_schema")
