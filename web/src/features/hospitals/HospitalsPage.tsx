@@ -70,18 +70,17 @@ export function HospitalsPage() {
               <th className="text-left px-4 py-2 font-medium text-gray-600">Ort</th>
               <th className="text-left px-4 py-2 font-medium text-gray-600">Stufe</th>
               <th className="text-right px-4 py-2 font-medium text-gray-600">Defizit</th>
-              <th className="text-right px-4 py-2 font-medium text-gray-600">SMR</th>
-              <th className="text-right px-4 py-2 font-medium text-gray-600">PpUGV %</th>
-              <th className="text-right px-4 py-2 font-medium text-gray-600">Betten</th>
+              <th className="text-right px-4 py-2 font-medium text-gray-600">QB-Qualität</th>
+              <th className="text-right px-4 py-2 font-medium text-gray-600">CMI</th>
               <th className="text-right px-4 py-2 font-medium text-gray-600">Konfidenz</th>
             </tr>
           </thead>
           <tbody>
             {isLoading && (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">Lade…</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Lade…</td></tr>
             )}
             {!isLoading && data?.items.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">Keine Einrichtungen gefunden.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Keine Einrichtungen gefunden.</td></tr>
             )}
             {data?.items.map((h: Hospital) => (
               <tr key={h.ik_nummer} className="border-b last:border-0 hover:bg-gray-50">
@@ -98,9 +97,10 @@ export function HospitalsPage() {
                 <td className="px-4 py-2 text-right">
                   {h.kpi ? <DeficitBadge score={h.kpi.def_index} /> : <span className="text-gray-300">–</span>}
                 </td>
-                <td className="px-4 py-2 text-right text-gray-600">{h.kpi?.mort_adj?.toFixed(2) ?? "–"}</td>
-                <td className="px-4 py-2 text-right text-gray-600">{h.kpi?.ppugv_quote?.toFixed(1) ?? "–"}</td>
-                <td className="px-4 py-2 text-right text-gray-600">{h.kpi?.betten?.toLocaleString("de-DE") ?? "–"}</td>
+                <td className="px-4 py-2 text-right text-gray-600">
+                  {h.kpi?.quality_score != null ? `${(h.kpi.quality_score * 100).toFixed(1)}%` : "–"}
+                </td>
+                <td className="px-4 py-2 text-right text-gray-600">{h.kpi?.casemix_index?.toFixed(3) ?? "–"}</td>
                 <td className="px-4 py-2 text-right">
                   {h.kpi ? (
                     <span className={`text-xs ${h.kpi.konfidenz >= 0.8 ? "text-green-600" : h.kpi.konfidenz >= 0.5 ? "text-yellow-600" : "text-red-500"}`}>

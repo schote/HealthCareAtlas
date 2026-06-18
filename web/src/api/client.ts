@@ -17,12 +17,8 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 export interface HospitalKPI {
   berichtsjahr: number;
   def_index: number;
-  mort_adj: number | null;
-  ppugv_quote: number | null;
-  access_min: number | null;
-  minq_quote: number | null;
+  quality_score: number | null;
   casemix_index: number | null;
-  betten: number | null;
   konfidenz: number;
   datenstand: string;
 }

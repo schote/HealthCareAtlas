@@ -8,10 +8,8 @@ import { api } from "@/api/client";
 
 const AXIS_OPTIONS = [
   { key: "def_index", label: "Defizit-Index" },
-  { key: "mort_adj", label: "Adjustierte Mortalität (SMR)" },
-  { key: "ppugv_quote", label: "PpUGV-Konformität %" },
-  { key: "access_min", label: "Erreichbarkeit (min)" },
-  { key: "minq_quote", label: "Mindestmengen-Quote %" },
+  { key: "quality_score", label: "QB-Qualitätsdefizit (0-1)" },
+  { key: "casemix_index", label: "Casemix-Index (DRG)" },
 ];
 
 function colorFromDeficit(def: number) {
@@ -21,8 +19,8 @@ function colorFromDeficit(def: number) {
 }
 
 export function AnalysisPage() {
-  const [xAxis, setXAxis] = useState("access_min");
-  const [yAxis, setYAxis] = useState("mort_adj");
+  const [xAxis, setXAxis] = useState("quality_score");
+  const [yAxis, setYAxis] = useState("casemix_index");
 
   const { data, isLoading } = useQuery({
     queryKey: ["hospitals-analysis", 2022],
@@ -36,7 +34,6 @@ export function AnalysisPage() {
       y: (h.kpi as unknown as Record<string, number | null>)[yAxis] ?? 0,
       def: h.kpi!.def_index,
       name: h.name ?? h.ik_nummer,
-      betten: h.kpi!.betten ?? 100,
     }));
 
   return (
